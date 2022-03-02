@@ -365,6 +365,10 @@ foldint(Con *res, int op, int w, Con *cl, Con *cr)
 	}
 	else if (cl->type == CAddr || cr->type == CAddr)
 		return 1;
+	if ((op == Odiv || op == Orem)
+	&& (w ? l.s == INT64_MIN && r.s == -1
+		: (int32_t)l.s == INT32_MIN && (int32_t)r.s == -1))
+		return 1;
 	switch (op) {
 	case Oadd:  x = l.u + r.u; break;
 	case Osub:  x = l.u - r.u; break;
