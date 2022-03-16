@@ -524,3 +524,47 @@ opfold(int op, int cls, Con *cl, Con *cr, Fn *fn)
 	assert(!(cls == Ks || cls == Kd) || c.flt);
 	return r.val;
 }
+
+static void
+opfold_harness(Con *res, int op, int cls, Con *cl, Con *cr)
+{
+	int w;
+	uint64_t x, xs;
+
+	__CPROVER_assume(res != NULL && cl != NULL && cr != NULL);
+	__CPROVER_assume(cls == Kw || cls == Kl /* || cls == Ks || cls == Kd */);
+	__CPROVER_assume(cr->type == CBits || cr->type == CAddr);
+	w = KWIDE(cls);
+
+	for (op = Oadd; op <= Ocast; op++) {
+		/* skip memory operations */
+		if (op >= Ostoreb && op <= Oload)
+			continue;
+		if ((op == Odiv || op == Oudiv || op == Orem || op == Ourem)
+		&& czero(cr, w))
+			continue;
+		if (cls == Kw || cls == Kl) {
+			/* skip float-only operations */
+			if (op == Oexts || op == Otruncd
+			|| (op >= Oswtof && op <= Oultof))
+				continue;
+			if (foldint(res, op, w, cl, cr))
+				continue;
+			xs = opsemint(op, w, cl->bits.i, cr->bits.i);
+		} else {
+			/* skip int-only operations */
+			/*
+			if (!((op >= Oadd && op <= Odiv)
+			|| op == Omul
+			|| op == Oexts
+			|| op == Otruncd
+			|| (op >= Oswtof && op <= Ocast)))
+				continue;
+			foldflt(res, op, w, cl, cr);
+			xs = opsemflt(op, w, cl->bits.i, cr->bits.i);
+			*/
+		}
+		x = w ? res->bits.i : (uint32_t)res->bits.i;
+		__CPROVER_assert(x == xs, "fold result");
+	}
+}

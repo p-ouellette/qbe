@@ -510,6 +510,10 @@ void ssacheck(Fn *);
 /* copy.c */
 void copy(Fn *);
 
+/* opsem.c */
+uint64_t opsemint(int op, int w, uint64_t a, uint64_t b);
+uint64_t opsemflt(int op, int w, uint64_t a, uint64_t b);
+
 /* fold.c */
 void fold(Fn *);
 
